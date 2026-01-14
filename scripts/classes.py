@@ -20,4 +20,3 @@ class Tool(BaseModel):
     purpose: str
     category: str
     user_base: str
-    document_types: List[str]
