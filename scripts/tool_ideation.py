@@ -1,25 +1,25 @@
 import os
 from classes import Tool
 import openai
-from llm_client import call_llm
+from llm_client import call_llm, load_prompt
+from tool_store import save_tool
 
 
-def main():
+def generate_tool(model, temperature, prompt_name, filename) -> Tool:
 
-    def generate_tool(model, temperature, prompt_name) -> Tool:
-        response = call_llm(
-            prompt_name=prompt_name,
-            model=model,
-            temperature=temperature,
-            max_tokens=200
-        )
+    prompt = load_prompt(prompt_name)
 
-        return Tool.model_validate_json(response)
+    tool = call_llm(
+        prompt=prompt,
+        model=model,
+        temperature=temperature,
+        max_tokens=200,
+        # text_format=Tool
+    )
 
+    # do once
+    save_tool(Tool.model_validate_json(tool), filename)
 
-    tool = generate_tool(model="l2-gpt-4o-mini", temperature=0.7, prompt_name="tool_ideation.md")
+    return Tool.model_validate_json(tool)
 
-    print(tool)
     
-if __name__ == "__main__":
-    main()

@@ -1,3 +1,9 @@
+<!--
+Prompt name: tool_ideation
+Version: 1.0
+Purpose: Generate fictional software tool name and description
+-->
+
 Your task is to invent a realistic fictional software tool.
 
 Requirements:
