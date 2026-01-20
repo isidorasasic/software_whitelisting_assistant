@@ -4,7 +4,7 @@ from typing import TypeVar, Type, Optional, Dict, Any
 from pydantic import BaseModel
 import openai
 from dotenv import load_dotenv
-from classes import TOC
+from software_whitelisting_assistant.scripts.classes import TOC
 import inspect
 
 # Load environment variables from .env file
@@ -37,7 +37,17 @@ def call_llm(
     text_format: Optional[Type[T]] = None
 ):
     # DEBUG
-    print(inspect.signature(client.responses.create))
+    # print(inspect.signature(client.responses.create))
+
+    if text_format is None:
+        # Plain text generation
+        response = client.responses.create(
+            model=model,
+            input=prompt,
+            temperature=temperature,
+            max_output_tokens=max_tokens
+        )
+        return response.output_text
 
     response = client.responses.parse(
         model=model,
@@ -46,6 +56,13 @@ def call_llm(
         max_output_tokens=max_tokens,
         text_format=text_format
     )
+
+    usage = response.usage
+
+    print("/nInput tokens:", usage.input_tokens)
+    print("Output tokens:", usage.output_tokens)
+    print("Total tokens:", usage.total_tokens)
+    print("/n")
 
     if text_format is not None:
         if response.output_parsed is None:

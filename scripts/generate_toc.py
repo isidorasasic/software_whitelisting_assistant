@@ -1,8 +1,9 @@
-from classes import TOC
-from llm_client import call_llm, load_prompt
+from software_whitelisting_assistant.scripts.classes import TOC
+from software_whitelisting_assistant.scripts.llm_client import call_llm, load_prompt
+from software_whitelisting_assistant.scripts.artifacts_store import save_toc
 
 
-def generate_TOC(tool, document_type, prompt_name, model, temperature) -> TOC:
+def generate_TOC(tool, document_type, prompt_name, model, temperature, toolname) -> TOC:
 
     prompt = load_prompt(prompt_name).format(
         document_type=document_type,
@@ -16,19 +17,12 @@ def generate_TOC(tool, document_type, prompt_name, model, temperature) -> TOC:
         prompt=prompt, 
         model=model, 
         temperature=temperature, 
-        max_tokens=200,
-        # text={
-        #     "format": {
-        #         "type": "json_schema",
-        #         "name": "toc",
-        #         "schema": TOC.model_json_schema(),
-        #         "description": "Table of contents for a legal document"
-        #     }
-        # }
+        max_tokens=1200,
         text_format=TOC
     )
 
     # print(type(response_text))
+    save_toc(TOC.model_validate(response_text), toolname)
 
     return TOC.model_validate(response_text)
 
