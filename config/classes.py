@@ -6,6 +6,11 @@ class ToolConfig(BaseModel):
     count: int = Field(gt=0)
 
 
+class DocumentsConfig(BaseModel):
+    types: List[str]
+    per_tool: int
+
+
 class ModelConfig(BaseModel):
     tool: str
     toc: str
@@ -36,6 +41,7 @@ class GenerationConfig(BaseModel):
 
 
 class IssueConfig(BaseModel):
+    min_per_document: int = Field(ge=0)
     max_per_document: int = Field(ge=0)
 
 
@@ -46,8 +52,7 @@ class OutputConfig(BaseModel):
 class AppConfig(BaseModel):
     seed: int
     tools: ToolConfig
-    documents_per_tool: int
-    document_types: List[str]
+    documents: DocumentsConfig
     models: ModelConfig
     prompts: PromptConfig
     generation: GenerationConfig

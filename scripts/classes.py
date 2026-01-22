@@ -5,9 +5,7 @@ from typing import List, Optional
 class TOCSection(BaseModel):
     id: str
     title: str
-    anchor: str
-    subsections: list["Section"] = Field(default_factory=list)
-    content: Optional[str] = None
+    subsections: list[TOCSection] = Field(default_factory=list)
 
 
 class TOC(BaseModel):
@@ -43,5 +41,8 @@ class SectionLLMOutput(BaseModel):
 class InjectedIssue(BaseModel):
     section_id: str
     section_title: str
-    description: str        # free-form explanation
+    description: str
     severity: Optional[str] = None
+
+
+TOCSection.model_rebuild()

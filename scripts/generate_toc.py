@@ -1,9 +1,16 @@
-from software_whitelisting_assistant.scripts.classes import TOC
+from software_whitelisting_assistant.scripts.classes import Tool, TOC
 from software_whitelisting_assistant.scripts.llm_client import call_llm, load_prompt
-from software_whitelisting_assistant.scripts.artifacts_store import save_toc
+from pydantic import ValidationError
 
 
-def generate_TOC(tool, document_type, prompt_name, model, temperature, toolname) -> TOC:
+def generate_TOC(
+    tool: Tool, 
+    document_type: str, 
+    prompt_name: str, 
+    model: str, 
+    temperature: float, 
+    max_tokens: int
+) -> TOC:
 
     prompt = load_prompt(prompt_name).format(
         document_type=document_type,
@@ -17,13 +24,14 @@ def generate_TOC(tool, document_type, prompt_name, model, temperature, toolname)
         prompt=prompt, 
         model=model, 
         temperature=temperature, 
-        max_tokens=1200,
+        max_tokens=max_tokens,
         text_format=TOC
     )
 
-    # print(type(response_text))
-    save_toc(TOC.model_validate(response_text), toolname)
-
-    return TOC.model_validate(response_text)
-
+    try:
+        toc = TOC.model_validate(response_text)
+        return toc
+    except ValidationError as e:
+        print("TOC validation failed:", e)
+        return response_text
 
