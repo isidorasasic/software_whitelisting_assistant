@@ -1,10 +1,12 @@
-from typing import List, Set, Tuple
-from software_whitelisting_assistant.scripts.classes import Tool, TOC, TOCSection, Section, SectionLLMOutput, InjectedIssue
-from software_whitelisting_assistant.scripts.llm_client import call_llm, load_prompt
-from software_whitelisting_assistant.scripts import load_config
+from typing import List, Set, Tuple, Mapping
 import random
-import json
+import html
 from bs4 import BeautifulSoup
+from software_whitelisting_assistant.scripts.classes import Tool, TOC, TOCSection, Section, SectionLLMOutput, InjectedIssue
+from software_whitelisting_assistant.scripts.llm_client import call_llm
+from software_whitelisting_assistant.scripts.load_config import load_configuration
+from software_whitelisting_assistant.scripts.utils import print_injected_issues, print_section_console
+from software_whitelisting_assistant.scripts.artifacts_store import load_prompt
 
 
 def summarize_previous_sections(sections, limit: int = 3) -> str:
@@ -19,26 +21,6 @@ def summarize_previous_sections(sections, limit: int = 3) -> str:
 
     recent = sections[-limit:]
     return "\n".join(f"- {s.title}" for s in recent)
-
-
-def save_issue_metadata(path, issue_sections: set[str]):
-    """
-    Save metadata about sections that have issues to a JSON file.
-
-    Args:
-        path (Path): The file path where the metadata JSON will be saved.
-        issue_sections (set[str]): A set of section IDs that have issues.
-    """
-
-    path.write_text(
-        json.dumps(
-            {
-                "sections_with_issues": sorted(issue_sections)
-            },
-            indent=2
-        ),
-        encoding="utf-8",
-    )
 
 
 def collect_section_ids(toc) -> list[str]:
@@ -85,82 +67,83 @@ def get_issue_sections(
     return set(random.sample(section_ids, count))
 
 
-def print_section_console(
-    title: str,
-    content: str,
-    level: int,
-    parent_title: str | None
-) -> None:
+def assemble_sections_from_toc(
+    toc_sections: list[TOCSection],
+    section_by_id: Mapping[str, Section], *,
+    strict: bool = False
+) -> str:
     """
-    Print a formatted section to the console with indentation based on its level.
-
-    Args:
-        title (str): The title of the section.
-        content (str): The text content of the section.
-        level (int): The nesting level of the section (used to determine indentation).
-        parent_title (str | None): The title of the parent section, if any.
+    Render nested HTML <section> elements based on the TOC tree.
+    - toc_sections: top-level TOC nodes
+    - section_by_id: mapping from section id -> Section
+    - strict: if True, raise KeyError when a TOC node has no matching Section;
+      if False, skip it.
     """
-    indent = "  " * (level - 1)
-
-    if parent_title:
-        print(f"\n{indent}{parent_title} → {title}")
-    else:
-        print(f"\n{indent}{title}")
-
-    print(f"{indent}{'-' * 60}")
-
-    for line in content.splitlines():
-        print(f"{indent}{line}")
-
-    print()
-
-
-def print_injected_issues(
-    issues: list[InjectedIssue],
-    level: int
-):
-    """
-    Print a list of injected issues to the console with formatting and indentation.
-
-    Args:
-        issues (list[InjectedIssue]): A list of issues to print.
-        level (int): The nesting level of the parent section.
-    """
-    if not issues:
-        return
-
-    indent = "  " * (level - 1)
-    print(f"{indent}⚠️  Injected issues:")
-
-    for i, issue in enumerate(issues, start=1):
-        sev = f" [{issue.severity}]" if issue.severity else ""
-        print(f"{indent}  {i}. {issue.description}{sev}")
-
-
-def assemble_sections_to_html(sections: List[Section]) -> str:
-    """
-    Assemble a list of cleaned sections into a single HTML string.
-
-    Args:
-        sections (List[Section]): A list of Section objects.
-
-    Returns:
-        str: A single HTML string containing all sections wrapped in `<section>` tags.
-    """
-
+    
     parts: list[str] = []
 
-    for section in sections:
-        # Clean and fix unclosed/malformed tags
-        clean_html = BeautifulSoup(section.content_html, "html.parser")
-        body = str(clean_html)
+    def render_node(node: TOCSection) -> str:
+        sec = section_by_id.get(node.id)
+        if sec is None:
+            if strict:
+                raise KeyError(f"No Section found for TOC id '{node.id}'")
+            return ""  # skip this node (and its subtree)
 
-        # Wrap in section
-        parts.append(
-            f'<section id="{section.id}">\n{body}\n</section>'
+        inner_parts = [sec.content_html]
+        for child in node.subsections or []:
+            child_html = render_node(child)
+            if child_html:
+                inner_parts.append(child_html)
+
+        level_attr = f' data-level="{sec.level}"' if getattr(sec, "level", None) is not None else ""
+        return (
+            f'<section id="{html.escape(sec.id, quote=True)}"{level_attr}>'
+            + "\n".join(inner_parts)
+            + "</section>"
         )
 
+    for node in toc_sections:
+        rendered = render_node(node)
+        if rendered:
+            parts.append(rendered)
+
     return "\n\n".join(parts)
+
+
+def build_full_html(
+    toc: TOC,
+    sections: List[Section], *,
+    strict: bool = False
+) -> str:
+    """
+    Assemble a complete HTML document from a TOC and its sections.
+
+    Args:
+        toc (TOC): The table of contents describing the document structure.
+        sections (List[Section]): The list of generated sections with HTML content.
+        strict (bool, optional): If True, enforce strict HTML assembly rules.
+                                 Defaults to False.
+
+    Returns:
+        str: A complete HTML document as a string.
+    """
+    section_by_id: Mapping[str, Section] = {s.id: s for s in sections}
+    body_html = assemble_sections_from_toc(toc.sections, section_by_id, strict=strict)
+
+    return (
+        f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8" />
+        <title>{html.escape(toc.title)}</title>
+        </head>
+        <body>
+        {body_html}
+        </body>
+        </html>
+        """.strip()
+    )
 
 
 def generate_sections_from_toc(
@@ -194,7 +177,7 @@ def generate_sections_from_toc(
     collected_issues: List[InjectedIssue] = []
 
     # plan issues at document level
-    config = load_config("config.yaml")
+    config = load_configuration()
     section_ids = collect_section_ids(toc)
     issue_sections = get_issue_sections(
         section_ids, 
@@ -264,7 +247,6 @@ def generate_sections_from_toc(
         # Clean HTML and update section
         section_html = clean_html(result.content)
 
-        # Print for debug
         print_section_console(
             title=section.title,
             content=section_html,

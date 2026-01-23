@@ -2,17 +2,16 @@ from pathlib import Path
 import random
 from software_whitelisting_assistant.scripts.generate_tool import generate_tool
 from software_whitelisting_assistant.scripts.generate_toc import generate_TOC
-from software_whitelisting_assistant.scripts.generate_sections import generate_sections_from_toc, assemble_sections_to_html, summarize_previous_sections, save_issue_metadata
+from software_whitelisting_assistant.scripts.generate_sections import generate_sections_from_toc, build_full_html
 from software_whitelisting_assistant.scripts.artifacts_store import save_toc, save_tool, save_html, save_metadata
-from software_whitelisting_assistant.scripts.load_config import load_config
-from software_whitelisting_assistant.scripts.utils import normalize_name, build_full_html
+from software_whitelisting_assistant.scripts.load_config import load_configuration
+from software_whitelisting_assistant.scripts.utils import normalize_name
 from software_whitelisting_assistant.scripts.validate import validate_toc, validate_html
-from pydantic import ValidationError
 
 def main():
 
     # Load configuration
-    config = load_config("config.yaml")
+    config = load_configuration()
     print("Loaded configuration:")
     print(config.model_dump_json(indent=2))
 
@@ -20,13 +19,15 @@ def main():
     # random.seed(config.seed)
     # print(f"Seed set to {config.seed}")
 
-    # Generate tools
+    # Define output folder
     output_folder = Path(__file__).parent.parent / "data"
     output_folder.mkdir(parents=True, exist_ok=True)
 
+    # -----------------------------
+    # Generate tools
+    # -----------------------------
     tools = []
     for i in range(config.tools.count): 
-    # for i in range(1):
         print(f"[Tool] Generating Tool {i+1}...")
         tool = generate_tool(
             model=config.models.tool,         
@@ -43,8 +44,8 @@ def main():
 
     print(f"[Info] Total tools generated: {len(tools)}")
 
-    for tool in tools:
-        print(tool.model_dump_json(indent=2))
+    # for tool in tools:
+    #     print(tool.model_dump_json(indent=2))
 
     # --------------------------------------------------
     # 3. Generate documents per tool
@@ -55,7 +56,7 @@ def main():
         tool_dir = output_folder / tool_name
         tool_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"\nGenerating documents for tool: {tool.name}")
+        print(f"\nGenerating documents for tool: {tool.name}\n")
 
         # Pick 4 distinct document types
         doc_types = random.sample(config.documents.types, k=config.documents.per_tool)
@@ -77,6 +78,7 @@ def main():
                 max_tokens=config.generation.max_tokens.toc
             )
 
+            # debug print
             if isinstance(toc, str):
                 print("Raw LLM output:\n", toc)
 

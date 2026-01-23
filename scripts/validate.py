@@ -4,13 +4,19 @@ from software_whitelisting_assistant.scripts.classes import TOC, TOCSection
 
 
 class TOCValidationError(Exception):
+    """Raised when a TOC fails structural or logical validation."""
     pass
 
 
 def validate_toc(toc: TOC) -> None:
     """
-    Validates structural and logical integrity of a TOC.
-    Raises TOCValidationError if invalid.
+    Validate the structural and logical integrity of a table of contents (TOC).
+
+    Args:
+        toc (TOC): The TOC to validate.
+
+    Raises:
+        TOCValidationError: If any validation rule is violated.
     """
 
     if not toc.id.strip():
@@ -46,10 +52,17 @@ def validate_toc(toc: TOC) -> None:
 
 
 class HTMLValidationError(Exception):
+    """Raised when generated HTML fails basic structural validation."""
     pass
 
 
 class _HTMLValidator(HTMLParser):
+    """
+    Internal HTML parser to check basic structure.
+
+    Tracks open tags, ensures <body> exists, and detects headings.
+    Raises HTMLValidationError on mismatched or unexpected tags.
+    """
 
     def __init__(self):
         super().__init__()
@@ -79,8 +92,13 @@ class _HTMLValidator(HTMLParser):
 
 def validate_html(html: str) -> None:
     """
-    Basic structural validation for generated HTML.
-    Raises HTMLValidationError if invalid.
+    Perform basic structural validation on a generated HTML document.
+
+    Args:
+        html (str): The HTML content to validate.
+
+    Raises:
+        HTMLValidationError: If any validation rule is violated.
     """
 
     if not html.strip():

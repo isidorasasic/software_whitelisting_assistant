@@ -1,13 +1,16 @@
 import re
-import html
-from typing import List
-from typing import Iterable, Mapping
-from software_whitelisting_assistant.scripts.classes import TOCSection, Section, TOC
+from software_whitelisting_assistant.scripts.classes import InjectedIssue
 
 
 def normalize_name(name: str) -> str:
     """
-    Convert name into a filesystem-safe folder name.
+    Convert a string into a filesystem-safe folder or file name.
+
+    Args:
+        name (str): The original name string to normalize.
+
+    Returns:
+        str: A normalized, filesystem-safe string.
     """
     name = name.lower().strip()
     name = name.replace("&", "and")
@@ -17,90 +20,53 @@ def normalize_name(name: str) -> str:
     return name
 
 
-def build_section_index(sections: Iterable[Section]) -> dict[str, Section]:
-    """Build a lookup dict of sections by id."""
-    
-    return {s.id: s for s in sections}
-
-
-def assemble_sections_from_toc(
-    toc_sections: list[TOCSection],
-    section_by_id: Mapping[str, Section], *,
-    strict: bool = False
-) -> str:
+def print_injected_issues(
+    issues: list[InjectedIssue],
+    level: int
+):
     """
-    Render nested HTML <section> elements based on the TOC tree.
-    - toc_sections: top-level TOC nodes
-    - section_by_id: mapping from section id -> Section
-    - strict: if True, raise KeyError when a TOC node has no matching Section;
-      if False, skip it.
+    Print a list of injected issues to the console with formatting and indentation.
+
+    Args:
+        issues (list[InjectedIssue]): A list of issues to print.
+        level (int): The nesting level of the parent section.
     """
-    
-    parts: list[str] = []
+    if not issues:
+        return
 
-    def render_node(node: TOCSection) -> str:
-        sec = section_by_id.get(node.id)
-        if sec is None:
-            if strict:
-                raise KeyError(f"No Section found for TOC id '{node.id}'")
-            return ""  # skip this node (and its subtree)
+    indent = "  " * (level - 1)
+    print(f"{indent}⚠️  Injected issues:")
 
-        inner_parts = [sec.content_html]
-        for child in node.subsections or []:
-            child_html = render_node(child)
-            if child_html:
-                inner_parts.append(child_html)
-
-        level_attr = f' data-level="{sec.level}"' if getattr(sec, "level", None) is not None else ""
-        return (
-            f'<section id="{html.escape(sec.id, quote=True)}"{level_attr}>'
-            + "\n".join(inner_parts)
-            + "</section>"
-        )
-
-    for node in toc_sections:
-        rendered = render_node(node)
-        if rendered:
-            parts.append(rendered)
-
-    return "\n\n".join(parts)
+    for i, issue in enumerate(issues, start=1):
+        sev = f" [{issue.severity}]" if issue.severity else ""
+        print(f"{indent}  {i}. {issue.description}{sev}")
 
 
-# def render_toc_nav(toc_sections: List["TOCSection"]) -> str:
-#     def render_node(node: "TOCSection") -> str:
-#         kids = node.subsections or [] 
-#         children_html = "".join(render_node(c) for c in kids)
-#         link = f'<a href="#{html.escape(node.id, quote=True)}">{html.escape(node.title)}</a>'
+def print_section_console(
+    title: str,
+    content: str,
+    level: int,
+    parent_title: str | None
+):
+    """
+    Print a formatted section to the console with indentation based on its level.
 
-#         if children_html:
-#             return f"<li>{link}<ul>{children_html}</ul></li>"
-        
-#         return f"<li>{link}</li>"
+    Args:
+        title (str): The title of the section.
+        content (str): The text content of the section.
+        level (int): The nesting level of the section (used to determine indentation).
+        parent_title (str | None): The title of the parent section, if any.
+    """
+    indent = "  " * (level - 1)
 
-#     items = "".join(render_node(n) for n in toc_sections)
-#     return f'<nav class="toc"><ul>{items}</ul></nav>'
+    if parent_title:
+        print(f"\n{indent}{parent_title} → {title}")
+    else:
+        print(f"\n{indent}{title}")
 
-def build_full_html(
-    toc: TOC,
-    sections: List[Section], *,
-    strict: bool = False
-) -> str: 
-    section_by_id: Mapping[str, Section] = {s.id: s for s in sections}
-    body_html = assemble_sections_from_toc(toc.sections, section_by_id, strict=strict)
-    # toc_nav = render_toc_nav(toc.sections)
+    print(f"{indent}{'-' * 60}")
 
-    return (
-        f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-        <meta charset="utf-8" />
-        <title>{html.escape(toc.title)}</title>
-        </head>
-        <body>
-        {body_html}
-        </body>
-        </html>
-        """.strip()
-    )
+    for line in content.splitlines():
+        print(f"{indent}{line}")
 
+    print()

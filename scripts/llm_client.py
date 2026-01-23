@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from typing import TypeVar, Type, Optional
 from pydantic import BaseModel
 import openai
@@ -18,16 +17,6 @@ client = openai.OpenAI(
     base_url=os.environ.get("BASE_URL")
 )
 
-# prompt path
-PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
-
-def load_prompt(name: str) -> str:
-    path = PROMPTS_DIR / name
-    if not path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {path}")
-    return path.read_text(encoding="utf-8")
-
-
 def call_llm(
     prompt: str,
     model: str,
@@ -39,7 +28,7 @@ def call_llm(
     # print(inspect.signature(client.responses.create))
 
     if text_format is None:
-        # Plain text generation
+        # Plain text generation (for sections)
         response = client.responses.create(
             model=model,
             input=prompt,
@@ -48,6 +37,7 @@ def call_llm(
         )
         return response.output_text
 
+    # Structured output generation (for tools and toc)
     response = client.responses.parse(
         model=model,
         input=prompt,
