@@ -21,25 +21,24 @@ def normalize_name(name: str) -> str:
 
 
 def print_injected_issues(
-    issues: list[InjectedIssue],
+    issue: InjectedIssue,
     level: int
 ):
     """
-    Print a list of injected issues to the console with formatting and indentation.
+    Print injected issue to the console with formatting and indentation.
 
     Args:
-        issues (list[InjectedIssue]): A list of issues to print.
+        issue (InjectedIssue): Injected issue to print.
         level (int): The nesting level of the parent section.
     """
-    if not issues:
+    if not issue:
         return
 
     indent = "  " * (level - 1)
-    print(f"{indent}⚠️  Injected issues:")
+    print(f"{indent}⚠️  Injected issue:")
 
-    for i, issue in enumerate(issues, start=1):
-        sev = f" [{issue.severity}]" if issue.severity else ""
-        print(f"{indent}  {i}. {issue.description}{sev}")
+    sev = f" [{issue.severity}]" if issue.severity else ""
+    print(f"{issue.description}{sev}")
 
 
 def print_section_console(

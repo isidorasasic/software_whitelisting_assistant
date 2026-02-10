@@ -9,20 +9,6 @@ from software_whitelisting_assistant.scripts.utils import print_injected_issues,
 from software_whitelisting_assistant.scripts.artifacts_store import load_prompt
 
 
-def summarize_previous_sections(sections, limit: int = 3) -> str:
-    """
-    Provide lightweight context for continuity without token bloat.
-    Args:
-        sections (Section): Sections to be summarized.
-        limit (int): Number of sections for summarization.
-    """
-    if not sections:
-        return "None"
-
-    recent = sections[-limit:]
-    return "\n".join(f"- {s.title}" for s in recent)
-
-
 def collect_section_ids(toc) -> list[str]:
     """
     Collect all section IDs from a table of contents (TOC) recursively.
@@ -98,6 +84,7 @@ def assemble_sections_from_toc(
         level_attr = f' data-level="{sec.level}"' if getattr(sec, "level", None) is not None else ""
         return (
             f'<section id="{html.escape(sec.id, quote=True)}"{level_attr}>'
+            + f"<h{sec.level+1}>{sec.title}</h{sec.level+1}>"
             + "\n".join(inner_parts)
             + "</section>"
         )
@@ -185,6 +172,10 @@ def generate_sections_from_toc(
         config.issues.max_per_document
     )
 
+    # DEBUG
+    # print("Issue sections:\n")
+    # print(issue_sections)
+
     def clean_html(html_str: str) -> str:
         """
         Clean and fix HTML content by automatically closing unclosed tags.
@@ -217,11 +208,13 @@ def generate_sections_from_toc(
         has_issue = section.id in issue_sections
 
         issue_instruction = (
-            "Include exactly ONE subtle quality issue in this section, such as typo, contradiction, inconsistent terminology or ambiguity. "
-            "Choose the issue type yourself. The issue must be minor and realistic."
+            "Include exactly ONE and only ONE of the following issue types in this section: "
+            "a minor typo, a minor internal contradiction, a single instance of inconsistent terminology, "
+            "or a minor ambiguity. Choose ONE type only. "
+            "The issue must be subtle, realistic, and limited to a single occurrence."
             if has_issue
             else
-            "Do NOT introduce any inconsistencies, ambiguities, typos, or errors."
+            "Write the section as a fully correct, internally consistent legal text with precise terminology."
         )
 
         prompt = load_prompt(prompt_name).format(
@@ -230,9 +223,13 @@ def generate_sections_from_toc(
             document_type=document_type,
             section_title=section.title,
             parent_title=parent_title or "None",
-            previous_summary=summarize_previous_sections(generated),
+            previous_sections=generated,
             issue_instruction=issue_instruction,
         )
+
+        # DEBUG
+        # print("PROMPT:\n")
+        # print(prompt)
 
         result = call_llm(
             prompt=prompt,
@@ -242,11 +239,30 @@ def generate_sections_from_toc(
             text_format=SectionLLMOutput
         )
 
+        # make sure injected issue is present
+        while not result.issue and has_issue:
+            # DEBUG
+            # print("\nEntered second LLM call - SECTIONS\n")
+            result = call_llm(
+                prompt=prompt,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                text_format=SectionLLMOutput
+            )
+
+        # if LLM injected issue to the wrong section set it to null
+        if result.issue and not has_issue:
+            # DEBUG
+            # print("\nLLM introduced issue to the WRONG section\n")
+            # print_injected_issues(result.issue, level)
+            result.issue = None
+
         result = SectionLLMOutput.model_validate(result)
 
         # Clean HTML and update section
         section_html = clean_html(result.content)
-
+        
         print_section_console(
             title=section.title,
             content=section_html,
@@ -255,12 +271,9 @@ def generate_sections_from_toc(
         )
 
         # Collect issues
-        for issue in result.issues:
-            issue.section_id = section.id
-            issue.section_title = section.title
-            collected_issues.append(issue)
+        collected_issues.append(result.issue)
 
-        print_injected_issues(result.issues, level)
+        print_injected_issues(result.issue, level)
 
         # Add to generated sections
         generated.append(
@@ -278,5 +291,8 @@ def generate_sections_from_toc(
 
     for top in toc.sections:
         walk(top, level=1, parent_title=None)
+
+    # clean the issue list from None
+    collected_issues = [issue for issue in collected_issues if issue]
 
     return generated, collected_issues
