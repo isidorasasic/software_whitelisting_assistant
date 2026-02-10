@@ -19,7 +19,6 @@ class ModelConfig(BaseModel):
 
 class TemperatureConfig(BaseModel):
     tool: float
-    toc: float
     section: float
 
 

@@ -1,4 +1,4 @@
-seed: 42
+seed: 3
 
 tools:
   count: 5
@@ -15,22 +15,21 @@ documents:
 
 models:
   tool: l2-gpt-4.1-mini
-  toc: l2-gpt-4.1
+  toc: l2-o3-mini
   section: l2-gpt-4.1-nano
 
 prompts:
   tool: tool_ideation_v2.md
   toc: toc_generation_v7.md
-  section: section_generation_v3.md
+  section: section_generation_v7.md
 
 generation:
   temperature:
     tool: 0.9
-    toc: 0.5
     section: 0.7
   max_tokens:
     tool: 200
-    toc: 2000
+    toc: 3000
     section: 1000
 
 issues:

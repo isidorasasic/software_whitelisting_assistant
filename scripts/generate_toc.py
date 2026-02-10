@@ -9,7 +9,6 @@ def generate_TOC(
     document_type: str, 
     prompt_name: str, 
     model: str, 
-    temperature: float, 
     max_tokens: int
 ) -> TOC:
     """
@@ -44,7 +43,6 @@ def generate_TOC(
     response_text = call_llm(
         prompt=prompt, 
         model=model, 
-        temperature=temperature, 
         max_tokens=max_tokens,
         text_format=TOC
     )

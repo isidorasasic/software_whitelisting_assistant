@@ -20,8 +20,8 @@ client = openai.OpenAI(
 def call_llm(
     prompt: str,
     model: str,
-    temperature: float,
     max_tokens: int,
+    temperature: float = None,
     text_format: Optional[Type[T]] = None,
 ):
     # DEBUG
@@ -46,13 +46,12 @@ def call_llm(
         text_format=text_format
     )
 
+    # # Token usage testing
     # usage = response.usage
-
-    # Token usage testing
-    # print("/nInput tokens:", usage.input_tokens)
+    # print("\nInput tokens:", usage.input_tokens)
     # print("Output tokens:", usage.output_tokens)
     # print("Total tokens:", usage.total_tokens)
-    # print("/n")
+    # print("\n")
 
     if text_format is not None:
         if response.output_parsed is None:
