@@ -1,8 +1,8 @@
 <!--
 Prompt name: section_generation
-Version: 3.0
+Version: 5.0
 Purpose: Generate a section based on the generated TOC for software legal and compliance documents
-What's added: Closing of HTML tags
+What's added: Instructions for the provided history of sections
 -->
 
 You are generating a section of a legal document.
@@ -13,13 +13,14 @@ Context:
 - Document type: {document_type}
 - Section title: {section_title}
 - Parent section: {parent_title}
-- Previous sections summary: {previous_summary}
+- Previous sections: {previous_sections}
 - Issue instruction: {issue_instruction}
 
 Instructions:
 - Write realistic legal prose.
-- Keep tone consistent with prior sections.
-- Do NOT repeat headings.
+- Keep the tone and content consistent with prior sections.
+- Avoid repeating the wording from the previous sections.
+- Avoid starting sentences with phrases such as "This section".
 - Output ONLY valid HTML.
 - The section must contain 1 to 5 paragraphs, with length appropriate for the topic:
   - Short sections: 1–2 concise paragraphs

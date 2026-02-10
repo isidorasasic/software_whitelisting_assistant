@@ -1,8 +1,8 @@
 <!--
 Prompt name: section_generation
-Version: 3.0
+Version: 4.0
 Purpose: Generate a section based on the generated TOC for software legal and compliance documents
-What's added: Closing of HTML tags
+What's added: Full section history
 -->
 
 You are generating a section of a legal document.
@@ -13,7 +13,7 @@ Context:
 - Document type: {document_type}
 - Section title: {section_title}
 - Parent section: {parent_title}
-- Previous sections summary: {previous_summary}
+- Previous sections: {previous_sections}
 - Issue instruction: {issue_instruction}
 
 Instructions:

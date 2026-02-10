@@ -27,7 +27,6 @@ Requirements:
 - Do not restrict TOC depth — use multiple levels if appropriate.
 - If a section has no subsections, use an empty array [].
 - Do not truncate strings or leave dangling quotes.
-- Return ONLY valid JSON. Do not include explanations, notes, or extra text.
 - Use kebab-case for all section IDs (e.g., "data-retention-policy").
 - IDs must be unique within the document.
 - Do NOT include numbering in section titles.
