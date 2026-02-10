@@ -3,9 +3,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import List
 from software_whitelisting_assistant.scripts.classes import Tool, TOC, InjectedIssue
+from software_whitelisting_assistant.scripts.utils import normalize_name
 
 
-TOOLS_DIR = Path(__file__).resolve().parents[1] / "data" /"testing"
+TOOLS_DIR = Path(__file__).resolve().parents[1] / "data"
 TOOLS_DIR.mkdir(parents=True, exist_ok=True)
 
 # prompt path
@@ -30,19 +31,16 @@ def load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def save_tool(tool: Tool, toolname: str, base_dir: Path):
+def save_tool(tool: Tool, tool_dir: Path):
     """
     Save a Tool object to disk as a JSON file.
 
     Args:
         tool (Tool): The Tool object to serialize and save.
-        toolname (str): The name of the tool, used for directory and file naming.
-        base_dir (Path): Base directory under which the tool directory is created.
+        tool_dir (Path): Directory where the TOC file will be written.
     """
-    tool_dir = base_dir / toolname
-    tool_dir.mkdir(parents=True, exist_ok=True)
 
-    path = tool_dir / f"{toolname}.json"
+    path = tool_dir / f"{normalize_name(tool.name)}.json"
     path.write_text(tool.model_dump_json(indent=2), encoding="utf-8")
 
 
@@ -78,17 +76,18 @@ def save_toc(toc: TOC, tool_dir, toc_name: str):
     path.write_text(toc.model_dump_json(indent=2), encoding="utf-8")
 
 
-def load_toc(toolname: str) -> TOC:
+def load_toc(toolname, document_name: str) -> TOC:
     """
     Load a table of contents (TOC) for a tool from disk.
 
     Args:
         toolname (str): The name of the tool whose TOC should be loaded.
+        document_name ( str): The normalized name of the document type (e.g. terms_of_service)
 
     Returns:
         TOC: The loaded and validated TOC object.
     """
-    path = TOOLS_DIR / toolname / f"toc_{toolname}.json"
+    path = TOOLS_DIR / toolname / f"toc_{document_name}.json"
     return TOC.model_validate_json(path.read_text(encoding="utf-8"))
 
 
@@ -121,7 +120,6 @@ def save_metadata(
     model_toc: str,
     model_section: str,
     temperature_tool: float,
-    temperature_toc: float,
     temperature_section: float,
     max_tokens_tool: int,
     max_tokens_toc: int,
@@ -140,7 +138,6 @@ def save_metadata(
         model_toc (str): Model used for TOC generation.
         model_section (str): Model used for section content generation.
         temperature_tool (float): Sampling temperature for tool generation.
-        temperature_toc (float): Sampling temperature for TOC generation.
         temperature_section (float): Sampling temperature for section generation.
         max_tokens_tool (int): Token limit for tool generation.
         max_tokens_toc (int): Token limit for TOC generation.
@@ -171,7 +168,6 @@ def save_metadata(
             "model_toc": model_toc,
             "model_section": model_section,
             "temperature_tool": temperature_tool,
-            "temperature_toc": temperature_toc,
             "temperature_section": temperature_section,
             "max_tokens_tool": max_tokens_tool,
             "max_tokens_toc": max_tokens_toc,
@@ -184,7 +180,7 @@ def save_metadata(
         "timestamp": datetime.now().isoformat()
     }
 
-    filename = toc.id.replace("-", "_")
+    filename = normalize_name(document_type)
     metadata_path = tool_dir / f"{filename}_metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 

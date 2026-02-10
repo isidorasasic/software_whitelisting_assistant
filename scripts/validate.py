@@ -1,6 +1,7 @@
 from html.parser import HTMLParser
-from typing import Set
-from software_whitelisting_assistant.scripts.classes import TOC, TOCSection
+from typing import Set, List
+from software_whitelisting_assistant.scripts.classes import TOC, TOCSection, InjectedIssue
+from software_whitelisting_assistant.scripts.load_config import load_configuration
 
 
 class TOCValidationError(Exception):
@@ -118,3 +119,28 @@ def validate_html(html: str) -> None:
     if not parser.has_heading:
         raise HTMLValidationError("HTML contains no headings")
 
+
+class InjectedIssueValidationError(Exception):
+    """Raised when the number of generated issues
+    is not matching the configuration parameters."""
+    pass
+
+
+def validate_injected_issues(injected_issues: List[InjectedIssue]):
+    """
+    Validate if the number of injected issue marches the config parameters.
+
+    Args:
+        injected_issues (List[InjectedIssue]): The list of InjectedIssue objects.
+
+    Raises:
+        InjectedIssueValidationError: If any validation rule is violated.
+    """
+    # Load configuration
+    config = load_configuration()
+
+    if len(injected_issues) < config.issues.min_per_document or \
+       len(injected_issues) > config.issues.max_per_document:
+        raise InjectedIssueValidationError(
+            f"The number of injected issues ({len(injected_issues)}) is not matching the configuration"
+        )
