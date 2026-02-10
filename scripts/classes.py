@@ -39,13 +39,6 @@ class Section(BaseModel):
     parent_id: str | None
     content_html: str
 
-class Document(BaseModel):
-    """
-    Represents a fully assembled document composed of multiple sections.
-    """
-    title: str
-    sections: List[Section]
-
 
 class Tool(BaseModel):
     """
@@ -64,7 +57,7 @@ class SectionLLMOutput(BaseModel):
     Includes generated content and any injected quality issues.
     """
     content: str
-    issues: List[InjectedIssue] = []
+    issue: InjectedIssue = None
 
 
 class InjectedIssue(BaseModel):
