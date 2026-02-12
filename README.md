@@ -19,21 +19,24 @@ The system is designed to simulate real-world documentation while allowing contr
 
 software_whitelisting_assistant/
 ├── scripts/
-│   ├── generate_tool.py         # Generates fictional software tools
-│   ├── generate_toc.py          # Generates TOC JSON for documents
-│   ├── generate_sections.py     # Generates HTML sections from TOC
-│   ├── generate_dataset.py      # Orchestrates multi-tool, multi-document generation (main orchestrator script)
-│   ├── llm_client.py            # LLM interaction wrapper
-│   ├── validate.py              # Validators for TOC and HTML
-│   ├── artifacts_store.py       # Saving/loading generated files
-│   ├── load_config.py           # Loads YAML configuration
-│   ├── utils.py                 # Helper functions
-│   └── classes.py               # Pydantic data models
+│ ├── generate_tool.py # Generates fictional software tools
+│ ├── generate_toc.py # Generates TOC JSON for documents
+│ ├── generate_sections.py # Generates HTML sections from TOC
+│ ├── generate_dataset.py # Main orchestrator (multi-tool, multi-document generation)
+│ ├── llm_client.py # LLM interaction wrapper
+│ ├── validate.py # TOC and HTML validators
+│ ├── artifacts_store.py # Saving/loading generated files
+│ ├── load_config.py # Loads YAML configuration
+│ ├── utils.py # Helper functions
+│ └── classes.py # Pydantic data models
+│
 ├── config/
-│   ├── classes.py               # Configuration models
-│   └── config.yaml              # Config file for models, temperature, document types, etc.
-├── prompts/                     # Prompt templates for TOC, sections, tools
-└── data/                        # Generated outputs
+│ ├── classes.py # Configuration models
+│ └── config.yaml # Models, temperature, document types, etc.
+│
+├── prompts/ # Prompt templates (TOC, sections, tools)
+│
+└── data/ # Generated outputs
 
 ## Features
 
