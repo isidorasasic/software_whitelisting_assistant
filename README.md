@@ -57,7 +57,9 @@ See requirements.txt
 
 Install dependencies:
 
+``` text
 pip install -r requirements.txt
+```
 
 ## Environment Configuration
 
