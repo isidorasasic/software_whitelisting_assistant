@@ -59,6 +59,15 @@ Install dependencies:
 
 pip install -r requirements.txt
 
+## Environment Configuration
+
+This project uses `python-dotenv` for local development.
+
+1. Create a `.env` file in the project root:
+   ```env
+   OPENAI_API_KEY=your-api-key
+   BASE_URL=your-llm-url
+
 ## Usage
 
 Generate documents for all tools
@@ -77,8 +86,8 @@ This will:
 - Save outputs under data/tools/{tool_name}/.
 
 ## Config parameters
-
-seed: 42                            # for testing
+```text
+seed: 42   
 
 tools:
   count: 5
@@ -119,7 +128,7 @@ issues:
 
 output:
   data_dir: data
-
+```
 
 ## Debugging / Logging
 
