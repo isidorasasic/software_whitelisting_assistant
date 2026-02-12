@@ -17,6 +17,7 @@ The system is designed to simulate real-world documentation while allowing contr
 
 ## Project Structure
 
+```text
 software_whitelisting_assistant/
 ├── scripts/
 │   ├── generate_tool.py        # Generates fictional software tools
@@ -37,6 +38,7 @@ software_whitelisting_assistant/
 ├── prompts/                    # Prompt templates (TOC, sections, tools)
 │
 └── data/                       # Generated outputs
+```
 
 
 ## Features
