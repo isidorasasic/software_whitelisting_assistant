@@ -1,0 +1,40 @@
+seed: 3
+
+tools:
+  count: 5
+
+documents:
+  types:
+    - Privacy Policy
+    - Terms of Service
+    - Data Processing Agreement
+    - Service Level Agreement
+    - Security Whitepaper
+    - Compliance & Certifications
+  per_tool: 4
+
+models:
+  tool: l2-gpt-4.1-mini
+  toc: l2-o3-mini
+  section: l2-gpt-4.1-nano
+
+prompts:
+  tool: tool_ideation_v2.md
+  toc: toc_generation_v7.md
+  section: section_generation_v7.md
+
+generation:
+  temperature:
+    tool: 0.9
+    section: 0.7
+  max_tokens:
+    tool: 200
+    toc: 3000
+    section: 1000
+
+issues:
+  min_per_document: 2
+  max_per_document: 3
+
+output:
+  data_dir: data
